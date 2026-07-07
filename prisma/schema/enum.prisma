@@ -1,7 +1,6 @@
 enum UserRole {
     TENANT
     LANDLORD
-    ADMIN
 }
 
 enum UserStatus {
