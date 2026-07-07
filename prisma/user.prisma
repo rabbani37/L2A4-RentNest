@@ -1,6 +1,6 @@
 model User {
     id       String     @id @default(uuid())
-    name     String     @db.Char(100)
+    name     String     @db.VarChar(100)
     email    String     @unique
     password String
     role     UserRole

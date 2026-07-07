@@ -5,7 +5,7 @@ model Payment {
     rentalRequest   RentalRequest         @relation(fields: [rentalRequestId], references: [id], onDelete: Cascade)
     tenantId        String
     tenant          User                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-    amount          Decimal
+    amount          Decimal @default(0.00) @db.Decimal(10,2)
     method          String?
     provider        PaymentProviderStatus
     status          PaymentStatus
