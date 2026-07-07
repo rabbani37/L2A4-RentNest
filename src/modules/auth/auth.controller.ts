@@ -19,21 +19,48 @@ const registerUser = catchAsyncFunc(
             data: result
         });
     }
-);
+);;
 
 
-const loginUser = catchAsyncFunc(async (req: Request, res: Response, next: NextFunction) => {
-    const payload = req.body;
-    const { accessToken, refreshToken } = await authService.loginUser(payload);
+const loginUser = catchAsyncFunc(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const payload = req.body;
+        const { accessToken, refreshToken } = await authService.loginUser(payload);
 
-    sendRespose(res, {
-        success: true,
-        statusCode: status.OK,
-        message: "Login successfully",
-        data: { accessToken, refreshToken }
-    });
-})
+        res.cookie("accessToken", accessToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "none",
+            maxAge: 1000 * 60 * 60 * 24, // 1Day
+        });
 
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "none",
+            maxAge: 1000 * 60 * 60 * 24 * 7 // 7Day
+        })
+        sendRespose(res, {
+            success: true,
+            statusCode: status.OK,
+            message: "Login successfully",
+            data: { accessToken, refreshToken }
+        });
+    });;
+
+
+const getProfile = catchAsyncFunc(
+    async (req: Request, res: Response, next: NextFunction) => {
+
+        const result = await authService.getProfile
+        sendRespose(res, {
+            success: true,
+            statusCode: status.OK,
+            message: "Login successfully",
+            data: result
+        });
+    }
+)
 
 
 
@@ -42,5 +69,6 @@ const loginUser = catchAsyncFunc(async (req: Request, res: Response, next: NextF
 
 export const authController = {
     registerUser,
-    loginUser
+    loginUser,
+    getProfile
 }

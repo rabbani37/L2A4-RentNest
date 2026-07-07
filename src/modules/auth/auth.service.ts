@@ -59,12 +59,16 @@ const loginUser = async (payload: ILoginUser) => {
 }
 
 
+const getProfile = () => {
 
+
+}
 
 
 
 export const authService = {
     registerUser,
-    loginUser
+    loginUser,
+    getProfile
 }
 

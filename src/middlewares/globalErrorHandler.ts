@@ -7,6 +7,7 @@ export const globalErrorHandler = (err: Error, req: Request, res: Response, next
 
     res.status(status.INTERNAL_SERVER_ERROR).json({
         success: false,
+        statusCode: status.INTERNAL_SERVER_ERROR,
         message: err.message,
         errorDetails: err.stack
     })
