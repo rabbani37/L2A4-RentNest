@@ -33,13 +33,14 @@ const loginUser = catchAsyncFunc(
             sameSite: "none",
             maxAge: 1000 * 60 * 60 * 24, // 1Day
         });
-
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
             secure: false,
             sameSite: "none",
             maxAge: 1000 * 60 * 60 * 24 * 7 // 7Day
-        })
+        });
+
+
         sendRespose(res, {
             success: true,
             statusCode: status.OK,
@@ -51,16 +52,16 @@ const loginUser = catchAsyncFunc(
 
 const getProfile = catchAsyncFunc(
     async (req: Request, res: Response, next: NextFunction) => {
-
-        const result = await authService.getProfile
+        const id = req.presentUser?.id
+        const result = await authService.getProfile(id as string)
         sendRespose(res, {
             success: true,
             statusCode: status.OK,
-            message: "Login successfully",
+            message: "Successfully retrieved your profiel",
             data: result
         });
     }
-)
+);;
 
 
 

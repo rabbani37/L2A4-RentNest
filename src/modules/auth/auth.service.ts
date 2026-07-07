@@ -35,22 +35,23 @@ const registerUser = async (payload: IRegisterUser) => {
 
 const loginUser = async (payload: ILoginUser) => {
     const { email, password } = payload
-    const isExistUser = await prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
         where: { email }
     });
 
-    if (!isExistUser) {
+    if (!user) {
         throw new Error("User not found! Please provide valid email")
     };
-    const isPassHash = await bcrypt.compare(password, isExistUser.password,)
+    const isPassHash = await bcrypt.compare(password, user.password,)
     if (!isPassHash) {
         throw new Error("Invalid Credentials")
     };
 
     const payloadJwt = {
-        name: isExistUser.name,
-        email: isExistUser.email,
-        role: isExistUser.role
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
     }
     const accessToken = jwtToken.createToken(payloadJwt, configIndex.jwt_access_secret, configIndex.token_access_expaired);
     const refreshToken = jwtToken.createToken(payloadJwt, configIndex.jwt_refresh_secret, configIndex.token_refresh_expaired);
@@ -59,8 +60,13 @@ const loginUser = async (payload: ILoginUser) => {
 }
 
 
-const getProfile = () => {
+const getProfile = async (id: string) => {
 
+    const user = await prisma.user.findUnique({
+        where: { id },
+        omit: { password: true }
+    });
+    return user;
 
 }
 
