@@ -1,0 +1,16 @@
+model RentalRequest {
+    id String @id @default(uuid())
+
+    tanentId   String
+    tanent     User     @relation(fields: [tanentId], references: [id], onDelete: Cascade)
+    propertyId String
+    property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+    status     RentalRequestStatus
+    moveInDate DateTime?
+    message    String?
+    createdAt  DateTime            @default(now())
+    updatedAt  DateTime            @updatedAt
+
+    @@map("rentalRequestes")
+}
