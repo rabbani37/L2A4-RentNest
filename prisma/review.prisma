@@ -1,0 +1,13 @@
+model Review {
+    id         String   @id @default(uuid())
+    tanentId   String
+    tanent     User     @relation(fields: [tanentId], references: [id], onDelete: Cascade)
+    propertyId String
+    property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+    rating     String
+    comment    String
+    createdAt  DateTime @default(now())
+
+
+    @@map("reviews")
+}
