@@ -12,6 +12,7 @@ const router = Router();
 
 router.post("/", authRole(UserRole.TENANT), rentalRequestController.createRantalRequest)
 router.get("/", authRole(UserRole.TENANT), rentalRequestController.getAllOwnRequest)
+router.get("/:id", authRole(UserRole.TENANT), rentalRequestController.getrentalRequestById)
 
 
 

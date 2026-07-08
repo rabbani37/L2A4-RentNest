@@ -25,7 +25,7 @@ const getAllOwnRequest = catchAsyncFunc(
     async (req: Request, res: Response, next: NextFunction) => {
         const tenantId = req.presentUser?.id
 
-        const result = await rentalRequestService.getAllOwnRequest( tenantId as string)
+        const result = await rentalRequestService.getAllOwnRequest(tenantId as string)
         sendRespose(res, {
             success: true,
             statusCode: status.OK,
@@ -33,14 +33,28 @@ const getAllOwnRequest = catchAsyncFunc(
             data: result
         });
     }
+);
+
+
+const getrentalRequestById = catchAsyncFunc(
+    async (req: Request, res: Response, next: NextFunction) => {
+       const requestId = req.params.id 
+
+        const result = await rentalRequestService.getrentalRequestById(requestId as string)
+        sendRespose(res, {
+            success: true,
+            statusCode: status.OK,
+            message: "Retrive your rental-request details",
+            data: result
+        });
+    }
 )
-
-
 
 
 export const rentalRequestController = {
     createRantalRequest,
-    getAllOwnRequest
+    getAllOwnRequest,
+    getrentalRequestById
 }
 
 
