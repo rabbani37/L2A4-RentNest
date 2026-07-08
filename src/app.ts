@@ -7,6 +7,7 @@ import { notFound } from "./middlewares/notFound"
 import { globalErrorHandler } from "./middlewares/globalErrorHandler"
 import { propertyRouter } from "./modules/property/property.router"
 import { categoryRouter } from "./modules/category/category.router"
+import { rentalRequestRouter } from "./modules/rentalRequest/rentalRequest.router"
 
 
 const app: Application = express()
@@ -27,10 +28,11 @@ app.use(cookieParser());
 
 
 
-app.use("/api/auth", authRouter)
+app.use("/api/auth", authRouter) // Public and ADMIN
 app.use("/api/categories", categoryRouter)
 app.use("/api/landlord", propertyRouter)
 app.use("/api/properties",propertyRouter) // Public API
+app.use("/api/rentals", rentalRequestRouter)
 
 app.get("/", async (req: Request, res: Response) => {
   res.send({ message: "Welcome to RentNest Backend!" })

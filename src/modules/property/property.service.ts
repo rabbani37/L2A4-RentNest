@@ -56,7 +56,6 @@ const getPropertyById = async (propertyId: string) => {
         throw new Error("Not Found Property")
     };
     return proprety;
-
 }
 
 
