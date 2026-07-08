@@ -30,6 +30,16 @@ const updatePropertyById = async (payload: IUpdateProperty, propertyId: string) 
         }
     })
     return result;
+};
+
+
+const deletePropertyById = async (propertyId: string) => {
+    const proprety = await prisma.property.findUnique({ where: { id: propertyId } });
+    if (!proprety) {
+        throw new Error("Not Found Property")
+    };
+
+    return await prisma.property.delete({ where: { id: propertyId } })
 }
 
 
@@ -38,7 +48,8 @@ const updatePropertyById = async (payload: IUpdateProperty, propertyId: string) 
 
 export const propertyService = {
     createProperties,
-    updatePropertyById
+    updatePropertyById,
+    deletePropertyById
 }
 
 

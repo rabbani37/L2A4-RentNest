@@ -11,7 +11,7 @@ const router = Router();
 
 router.post("/properties", authRole(UserRole.LANDLORD, UserRole.ADMIN), properController.createProperties)
 router.put("/properties/:id", properController.updatePropertyById)
-// router.delete("/properties/:id")
+router.delete("/properties/:id", properController.deletePropertyById)
 
 // router.get("/requests")
 // router.patch("/requests/:id")
