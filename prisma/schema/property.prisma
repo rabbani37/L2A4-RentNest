@@ -6,7 +6,7 @@ model Property {
     location     String
     city         String
     bedrooms     Int
-    buthrooms    Int
+    bathrooms    Int
     size         Float
     amenities    String[]
     images       String[]
@@ -14,7 +14,7 @@ model Property {
     categoryId   String
     category     Category             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
     landlordId   String
-    landlor      User                 @relation(fields: [landlordId], references: [id], onDelete: Cascade)
+    landlord      User                 @relation(fields: [landlordId], references: [id], onDelete: Cascade)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

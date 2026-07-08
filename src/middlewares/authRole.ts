@@ -10,6 +10,7 @@ import { TRequiredRole } from "./globalTypes";
 const authRole = (...requiredRole:TRequiredRole[]) => {
     return catchAsyncFunc(async (req: Request, res: Response, next: NextFunction) => {
 
+
         const token = req.cookies.accessToken ? req.cookies.accessToken :
             req.headers.authorization?.startsWith("Besre ") ?
                 req.headers.authorization?.split(" ")[1] : req.headers.authorization;
@@ -17,11 +18,13 @@ const authRole = (...requiredRole:TRequiredRole[]) => {
             throw new Error("You're not login. Please login to access this resourc")
         };
 
+
         const validToken = jwtToken.verifyToken(token, "access");
         if (validToken.success === false) {
             throw new Error(validToken.error)
         };
-        console.log(validToken);
+
+
         const { id, role } = validToken.validToken as JwtPayload;
         console.log(role);
         if (!requiredRole.includes(role)) {
