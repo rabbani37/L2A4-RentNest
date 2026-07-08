@@ -40,6 +40,23 @@ const deletePropertyById = async (propertyId: string) => {
     };
 
     return await prisma.property.delete({ where: { id: propertyId } })
+};
+
+
+
+const getAllProperties = async () => {
+    const properties = await prisma.property.findMany()
+    return properties;
+}
+
+
+const getPropertyById = async (propertyId: string) => {
+    const proprety = await prisma.property.findUnique({ where: { id: propertyId } });
+    if (!proprety) {
+        throw new Error("Not Found Property")
+    };
+    return proprety;
+
 }
 
 
@@ -49,7 +66,9 @@ const deletePropertyById = async (propertyId: string) => {
 export const propertyService = {
     createProperties,
     updatePropertyById,
-    deletePropertyById
+    deletePropertyById,
+    getAllProperties,
+    getPropertyById
 }
 
 

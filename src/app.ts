@@ -30,7 +30,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter)
 app.use("/api/categories", categoryRouter)
 app.use("/api/landlord", propertyRouter)
-
+app.use("/api/properties",propertyRouter) // Public API
 
 app.get("/", async (req: Request, res: Response) => {
   res.send({ message: "Welcome to RentNest Backend!" })

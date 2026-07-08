@@ -55,11 +55,42 @@ const deletePropertyById = catchAsyncFunc(
             data: null
         });
     }
+);
+
+
+
+const getAllProperties = catchAsyncFunc(
+    async (req: Request, res: Response, next: NextFunction) => {
+
+        const result = await propertyService.getAllProperties()
+        sendRespose(res, {
+            success: true,
+            statusCode: status.OK,
+            message: "Successfully retrive all properties",
+            data: result
+        });
+    }
+);
+
+
+const getPropertyById = catchAsyncFunc(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const propertyId = req.params.id
+        const result = await propertyService.getPropertyById(propertyId as string)
+        sendRespose(res, {
+            success: true,
+            statusCode: status.OK,
+            message: "Retrive property details",
+            data: result
+        });
+    }
 )
 
 
 export const properController = {
     createProperties,
     updatePropertyById,
-    deletePropertyById
+    deletePropertyById,
+    getAllProperties,
+    getPropertyById
 }
