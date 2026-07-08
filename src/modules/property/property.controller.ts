@@ -84,6 +84,21 @@ const getPropertyById = catchAsyncFunc(
             data: result
         });
     }
+);
+
+
+
+const getAllRentalRequests = catchAsyncFunc(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const landlordId = req.presentUser?.id
+        const result = await propertyService.getAllRentalRequests(landlordId as string)
+        sendRespose(res, {
+            success: true,
+            statusCode: status.OK,
+            message: "Get all rental requests for your eatch property",
+            data: result
+        });
+    }
 )
 
 
@@ -92,5 +107,6 @@ export const properController = {
     updatePropertyById,
     deletePropertyById,
     getAllProperties,
-    getPropertyById
+    getPropertyById,
+    getAllRentalRequests
 }

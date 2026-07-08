@@ -56,10 +56,20 @@ const getPropertyById = async (propertyId: string) => {
         throw new Error("Not Found Property")
     };
     return proprety;
+};
+
+
+const getAllRentalRequests = async (landlordId: string) => {
+
+    const rentalRequest = await prisma.rentalRequest.findMany({
+        where: {
+            property: { landlordId },
+
+        }
+    });
+
+    return rentalRequest;
 }
-
-
-
 
 
 export const propertyService = {
@@ -67,7 +77,8 @@ export const propertyService = {
     updatePropertyById,
     deletePropertyById,
     getAllProperties,
-    getPropertyById
+    getPropertyById,
+    getAllRentalRequests
 }
 
 

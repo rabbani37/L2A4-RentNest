@@ -9,17 +9,18 @@ const router = Router();
 
 
 
-router.post("/properties", authRole(UserRole.LANDLORD, UserRole.ADMIN), properController.createProperties)
+router.post("/properties", authRole(UserRole.LANDLORD, UserRole.ADMIN), properController.createProperties);
 
-router.put("/properties/:id", authRole(UserRole.LANDLORD, UserRole.ADMIN), properController.updatePropertyById)
+router.put("/properties/:id", authRole(UserRole.LANDLORD, UserRole.ADMIN), properController.updatePropertyById);
 
-router.delete("/properties/:id", authRole(UserRole.LANDLORD, UserRole.ADMIN), properController.deletePropertyById)
+router.delete("/properties/:id", authRole(UserRole.LANDLORD, UserRole.ADMIN), properController.deletePropertyById);
 
-// router.get("/requests")
-// router.patch("/requests/:id")
+router.get("/requests",authRole(UserRole.LANDLORD, UserRole.ADMIN), properController.getAllRentalRequests);
 
-router.get("/",properController.getAllProperties)
-router.get("/:id",properController.getPropertyById)
+// router.patch("/requests/:id");
+
+router.get("/",properController.getAllProperties);
+router.get("/:id",properController.getPropertyById);
 
 
 
