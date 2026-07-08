@@ -7,7 +7,7 @@ import bcrypt from "bcrypt"
 
 
 const registerUser = async (payload: IRegisterUser) => {
-    const { name, email, password, role } = payload;
+    const { email, password } = payload;
     const isExistUser = await prisma.user.findUnique({
         where: { email }
     });
@@ -20,10 +20,9 @@ const registerUser = async (payload: IRegisterUser) => {
 
     const createUser = await prisma.user.create({
         data: {
-            name,
-            email,
+            ...payload,
             password: hashPass,
-            role
+
         },
         omit: {
             password: true
@@ -57,18 +56,16 @@ const loginUser = async (payload: ILoginUser) => {
     const refreshToken = jwtToken.createToken(payloadJwt, configIndex.jwt_refresh_secret, configIndex.token_refresh_expaired);
 
     return { accessToken, refreshToken }
-}
-
+};;
 
 const getProfile = async (id: string) => {
-
     const user = await prisma.user.findUnique({
         where: { id },
         omit: { password: true }
     });
     return user;
 
-}
+};;
 
 
 

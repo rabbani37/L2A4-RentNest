@@ -5,8 +5,9 @@ import { UserRole } from "../../generated/prisma/enums";
 import { JwtPayload } from "jsonwebtoken";
 import status from "http-status";
 import prisma from "../lib/prisma";
+import { TRequiredRole } from "./globalTypes";
 
-const authRole = (...requiredRole: UserRole[]) => {
+const authRole = (...requiredRole:TRequiredRole[]) => {
     return catchAsyncFunc(async (req: Request, res: Response, next: NextFunction) => {
 
         const token = req.cookies.accessToken ? req.cookies.accessToken :

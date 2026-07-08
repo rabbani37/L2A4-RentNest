@@ -13,5 +13,7 @@ declare global {
             presentUser?: IUser;
         }
     }
-}
+};
+
+export type TRequiredRole = "ADMIN"|"LANDLORD"|"TENANT"
 
