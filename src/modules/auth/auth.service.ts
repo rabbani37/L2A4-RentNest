@@ -7,7 +7,12 @@ import bcrypt from "bcrypt"
 
 
 const registerUser = async (payload: IRegisterUser) => {
-    const { email, password } = payload;
+    const { email, password, role } = payload;
+
+    if (role !== "TENANT" && role !== "LANDLORD") {
+        throw new Error("The role field must be either TENANT or LANDLORD.")
+    }
+
     const isExistUser = await prisma.user.findUnique({
         where: { email }
     });

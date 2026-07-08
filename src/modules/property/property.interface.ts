@@ -18,3 +18,18 @@ export interface IProperty {
   availability: PropertyAvailability
   categoryId: string;
 }
+
+export interface IUpdateProperty {
+  title?: string;
+  description?: string;
+  price?: number;
+  location?: string;
+  city?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  size?: number;
+  amenities?: string[];
+  images?: string[];
+  availability?: PropertyAvailability
+  categoryId?: string;
+}

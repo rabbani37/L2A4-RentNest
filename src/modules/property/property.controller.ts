@@ -26,7 +26,25 @@ const createProperties = catchAsyncFunc(
 );
 
 
+const updatePropertyById = catchAsyncFunc(
+    async (req: Request, res: Response, next: NextFunction) => {
+
+        const propertyId = req.params.id
+        const payload = req.body;
+
+        const result = await propertyService.updatePropertyById(payload, propertyId as string)
+        sendRespose(res, {
+            success: true,
+            statusCode: status.OK,
+            message: "Successfully Update Property ",
+            data: result
+        });
+    }
+)
+
+
 
 export const properController = {
-    createProperties
+    createProperties,
+    updatePropertyById
 }

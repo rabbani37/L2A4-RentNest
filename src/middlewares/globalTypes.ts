@@ -15,5 +15,3 @@ declare global {
     }
 };
 
-export type TRequiredRole = "ADMIN"|"LANDLORD"|"TENANT"
-
