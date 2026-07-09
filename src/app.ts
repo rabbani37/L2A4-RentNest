@@ -36,8 +36,8 @@ app.use("/api/landlord", propertyRouter)
 app.use("/api/properties", propertyRouter) // Public API
 app.use("/api/rentals", rentalRequestRouter);
 app.use("/api/reviews", reviewRouter)
-app.use("/api/admin", adminRouter)
 
+app.use("/api/admin", adminRouter)
 
 
 

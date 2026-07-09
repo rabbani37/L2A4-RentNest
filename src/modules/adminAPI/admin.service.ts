@@ -21,6 +21,13 @@ const updateUserStatusByIdTroughAdmin = async (userStatus: UserStatus, userId: s
     });
 
     return updatedUser;
+};
+
+
+const getallPropertiesByAdmin = async() => {
+    
+    const properties = await prisma.property.findMany()
+    return properties
 }
 
 
@@ -30,5 +37,6 @@ const updateUserStatusByIdTroughAdmin = async (userStatus: UserStatus, userId: s
 
 export const adminService = {
     getAllUserByAdmin,
-    updateUserStatusByIdTroughAdmin
+    updateUserStatusByIdTroughAdmin,
+    getallPropertiesByAdmin
 }

@@ -34,10 +34,26 @@ const updateUserStatusByIdTroughAdmin = catchAsyncFunc(
             data: result
         });
     }
-)
+);
+
+
+
+const getallPropertiesByAdmin =
+    async (req: Request, res: Response, next: NextFunction) => {
+
+        const result = await adminService.getallPropertiesByAdmin()
+        sendRespose(res, {
+            success: true,
+            statusCode: status.OK,
+            message: "Successfully retrive all Properties",
+            data: result
+        });
+    }
+
 
 
 export const adminController = {
     getAllUserByAdmin,
-    updateUserStatusByIdTroughAdmin
+    updateUserStatusByIdTroughAdmin,
+    getallPropertiesByAdmin
 }
