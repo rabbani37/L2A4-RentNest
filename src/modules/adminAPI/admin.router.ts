@@ -12,7 +12,8 @@ const router = Router();
 
 
 router.get("/users", authRole(UserRole.ADMIN), adminController.getAllUserByAdmin)
-// router.patch("/users/:id")
+router.patch("/users/:id", adminController.updateUserStatusByIdTroughAdmin)
+
 // router.get("/properties")
 // router.get("/rentals")
 
