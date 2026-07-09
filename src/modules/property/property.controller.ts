@@ -99,8 +99,23 @@ const getAllRentalRequests = catchAsyncFunc(
             data: result
         });
     }
-)
+);
 
+
+const updateStatusOfRentalRequest = catchAsyncFunc(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const landlordId = req.presentUser?.id;
+        const requestId = req.params.id;
+        const statusValue = req.body.status ;
+        const result = await propertyService.updateStatusOfRentalRequest(statusValue, landlordId as string, requestId as string)
+        sendRespose(res, {
+            success: true,
+            statusCode: status.OK,
+            message: "Update status of rental requests for your property",
+            data: result
+        });
+    }
+)
 
 export const properController = {
     createProperties,
@@ -108,5 +123,6 @@ export const properController = {
     deletePropertyById,
     getAllProperties,
     getPropertyById,
-    getAllRentalRequests
+    getAllRentalRequests,
+    updateStatusOfRentalRequest
 }

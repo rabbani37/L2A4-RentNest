@@ -15,12 +15,12 @@ router.put("/properties/:id", authRole(UserRole.LANDLORD, UserRole.ADMIN), prope
 
 router.delete("/properties/:id", authRole(UserRole.LANDLORD, UserRole.ADMIN), properController.deletePropertyById);
 
-router.get("/requests",authRole(UserRole.LANDLORD, UserRole.ADMIN), properController.getAllRentalRequests);
+router.get("/requests", authRole(UserRole.LANDLORD, UserRole.ADMIN), properController.getAllRentalRequests);
 
-// router.patch("/requests/:id");
+router.patch("/requests/:id", authRole(UserRole.LANDLORD, UserRole.ADMIN),properController.updateStatusOfRentalRequest);
 
-router.get("/",properController.getAllProperties);
-router.get("/:id",properController.getPropertyById);
+router.get("/", properController.getAllProperties);
+router.get("/:id", properController.getPropertyById);
 
 
 
