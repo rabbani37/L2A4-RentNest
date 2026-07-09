@@ -24,13 +24,16 @@ const updateUserStatusByIdTroughAdmin = async (userStatus: UserStatus, userId: s
 };
 
 
-const getallPropertiesByAdmin = async() => {
-    
+const getallPropertiesByAdmin = async () => {
+
     const properties = await prisma.property.findMany()
     return properties
 }
 
-
+const getAllRentalRequest = async() => {
+  const rentalRequest = await prisma.rentalRequest.findMany()
+    return rentalRequest
+}
 
 
 
@@ -38,5 +41,6 @@ const getallPropertiesByAdmin = async() => {
 export const adminService = {
     getAllUserByAdmin,
     updateUserStatusByIdTroughAdmin,
-    getallPropertiesByAdmin
+    getallPropertiesByAdmin,
+    getAllRentalRequest
 }

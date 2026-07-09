@@ -38,7 +38,7 @@ const updateUserStatusByIdTroughAdmin = catchAsyncFunc(
 
 
 
-const getallPropertiesByAdmin =
+const getallPropertiesByAdmin = (
     async (req: Request, res: Response, next: NextFunction) => {
 
         const result = await adminService.getallPropertiesByAdmin()
@@ -49,11 +49,24 @@ const getallPropertiesByAdmin =
             data: result
         });
     }
+);
 
+const getAllRentalRequest = catchAsyncFunc(
+async (req: Request, res: Response, next: NextFunction) => {
 
+        const result = await adminService.getAllRentalRequest()
+        sendRespose(res, {
+            success: true,
+            statusCode: status.OK,
+            message: "Successfully retrive all Rental-Request",
+            data: result
+        });
+    }
+)
 
 export const adminController = {
     getAllUserByAdmin,
     updateUserStatusByIdTroughAdmin,
-    getallPropertiesByAdmin
+    getallPropertiesByAdmin,
+    getAllRentalRequest
 }
