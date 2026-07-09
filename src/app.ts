@@ -9,6 +9,7 @@ import { propertyRouter } from "./modules/property/property.router"
 import { categoryRouter } from "./modules/category/category.router"
 import { rentalRequestRouter } from "./modules/rentalRequest/rentalRequest.router"
 import { reviewRouter } from "./modules/review/review.router"
+import { adminRouter } from "./modules/adminAPI/admin.router"
 
 
 const app: Application = express()
@@ -35,6 +36,12 @@ app.use("/api/landlord", propertyRouter)
 app.use("/api/properties", propertyRouter) // Public API
 app.use("/api/rentals", rentalRequestRouter);
 app.use("/api/reviews", reviewRouter)
+app.use("/api/admin", adminRouter)
+
+
+
+
+
 
 app.get("/", async (req: Request, res: Response) => {
   res.send({ message: "Welcome to RentNest Backend!" })
