@@ -2,6 +2,7 @@ import { error } from "node:console";
 import prisma from "../../lib/prisma";
 import { IProperty, IUpdateProperty } from "./property.interface";
 import { PropertyAvailability, RentalRequestStatus } from "../../../generated/prisma/enums";
+import { validateRentalStatusInput } from "./validatePropertyInput";
 
 
 
@@ -227,11 +228,6 @@ const updateStatusOfRentalRequest = async (statusValue: RentalRequestStatus, lan
     })
     return updateStatusRequest;
 }
-const validateRentalStatusInput = (status: any) => {
-    if (!status || !["APPROVED", "REJECTED"].includes(status)) {
-        throw new Error("Status must be either APPROVED or REJECTED");
-    }
-};
 
 
 

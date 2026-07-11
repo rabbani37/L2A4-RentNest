@@ -5,6 +5,7 @@ import prisma from "../../lib/prisma";
 import { jwtToken } from "../../utility/jwt";
 import { ILoginUser, IRegisterUser } from "./auth.interface";
 import bcrypt from "bcrypt"
+import { validateLoginInput, validateRegisterInput } from "./validateAuthInput";
 
 
 const registerUser = async (payload: IRegisterUser) => {
@@ -36,21 +37,6 @@ const registerUser = async (payload: IRegisterUser) => {
 };;
 
 
-// Register Input Validation 
-const validateRegisterInput = (data: any) => {
-    if (!data.name || data.name.trim() === "") {
-        throw new Error("Name is required");
-    }
-    if (!data.email || !data.email.includes("@")) {
-        throw new Error("A valid email is required");
-    }
-    if (!data.password || data.password.length < 4) {
-        throw new Error("Password must be at least 4 characters long");
-    }
-    if (!data.role || ![UserRole.LANDLORD, UserRole.TENANT].includes(data.role)) {
-        throw new Error("Role must be either TENANT or LANDLORD");
-    }
-};
 
 
 
@@ -94,14 +80,7 @@ const loginUser = async (payload: ILoginUser) => {
     return { accessToken, refreshToken }
 };;
 
-const validateLoginInput = (data: any) => {
-    if (!data.email || !data.email.includes("@")) {
-        throw new Error("A valid email is required");
-    }
-    if (!data.password) {
-        throw new Error("Password is required");
-    }
-};
+
 
 
 

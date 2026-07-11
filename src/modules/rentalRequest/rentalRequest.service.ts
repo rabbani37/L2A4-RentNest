@@ -1,6 +1,6 @@
 import prisma from "../../lib/prisma"
 import { IRentalRequest } from "./rentalRequest.interface"
-import { validateRentalRequestInput } from "./inputValidationRentalrequest";
+import { validateRentalRequestInput } from "./validateRentalrequestInput";
 
 
 const createRantalRequest = async (payload: IRentalRequest, tenantId: string) => {

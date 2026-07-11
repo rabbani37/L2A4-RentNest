@@ -3,7 +3,6 @@ import { catchAsyncFunc } from "../../utility/tryCatchAsync";
 import { authService } from "./auth.service";
 import status from "http-status";
 import { sendRespose } from "../../utility/sendResponse";
-import { waitForDebugger } from "node:inspector";
 
 
 

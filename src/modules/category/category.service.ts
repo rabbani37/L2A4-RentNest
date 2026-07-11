@@ -1,4 +1,5 @@
 import prisma from "../../lib/prisma"
+import { validateCategoryInput } from "./validateCategoriesInput";
 
 const createCategory = async (payload: { name: string }) => {
     const { name } = payload
@@ -21,11 +22,6 @@ const createCategory = async (payload: { name: string }) => {
         data: { name }
     });
     return resutl;
-};
-const validateCategoryInput = (data: any) => {
-    if (!data.name || data.name.trim() === "") {
-        throw new Error("Category name is required");
-    }
 };
 
 
