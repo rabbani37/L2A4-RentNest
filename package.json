@@ -8,7 +8,7 @@
     "dev": "tsx watch ./src/server.ts",
     "start": "node dist/server.js",
     "build": "tsup",
-    "webhook-secret": "stripe listen --forward-to localhost:5000/api/payments/webhook"
+    "stripe:listen": "stripe listen --forward-to localhost:5000/api/payments/webhook"
   },
   "keywords": [],
   "author": "",
