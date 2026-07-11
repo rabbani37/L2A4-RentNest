@@ -10,6 +10,8 @@ import { categoryRouter } from "./modules/category/category.router"
 import { rentalRequestRouter } from "./modules/rentalRequest/rentalRequest.router"
 import { reviewRouter } from "./modules/review/review.router"
 import { adminRouter } from "./modules/adminAPI/admin.router"
+import { paymentRouter } from "./modules/payment/payment.router"
+
 
 
 const app: Application = express()
@@ -22,6 +24,9 @@ app.use(cors({
   origin: configIndex.app_url,
   credentials: true
 }));
+
+app.use("/api/payments/webhook", express.raw({ type: "application/json" }))
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -38,6 +43,8 @@ app.use("/api/rentals", rentalRequestRouter);
 app.use("/api/reviews", reviewRouter)
 
 app.use("/api/admin", adminRouter)
+app.use("/api/payments", paymentRouter)
+
 
 
 

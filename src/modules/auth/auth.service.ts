@@ -46,6 +46,11 @@ const loginUser = async (payload: ILoginUser) => {
     if (!user) {
         throw new Error("User not found! Please provide valid email")
     };
+
+    if (user.status === "BANNED") {
+        throw new Error("Your account has been banned. Please contact support.");
+    };
+
     const isPassHash = await bcrypt.compare(password, user.password,)
     if (!isPassHash) {
         throw new Error("Invalid Credentials")
