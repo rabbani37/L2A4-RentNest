@@ -1,5 +1,6 @@
 import { UserStatus } from "../../../generated/prisma/enums";
 import prisma from "../../lib/prisma";
+import { validateUserStatusInput } from "./validateUserStatusInput";
 
 
 
@@ -15,6 +16,10 @@ const getAllUserByAdmin = async () => {
 
 const updateUserStatusByIdTroughAdmin = async (userStatus: UserStatus, userId: string) => {
 
+
+    validateUserStatusInput(userStatus)
+
+   
     const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: { status: userStatus }
@@ -30,8 +35,8 @@ const getallPropertiesByAdmin = async () => {
     return properties
 }
 
-const getAllRentalRequest = async() => {
-  const rentalRequest = await prisma.rentalRequest.findMany()
+const getAllRentalRequest = async () => {
+    const rentalRequest = await prisma.rentalRequest.findMany()
     return rentalRequest
 }
 

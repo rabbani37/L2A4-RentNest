@@ -1,12 +1,20 @@
 import prisma from "../../lib/prisma"
 import { IRentalRequest } from "./rentalRequest.interface"
+import { validateRentalRequestInput } from "./inputValidationRentalrequest";
 
 
 const createRantalRequest = async (payload: IRentalRequest, tenantId: string) => {
+
+    validateRentalRequestInput(payload)
+
     const { propertyId } = payload;
     const request = await prisma.rentalRequest.findUnique({
         where: { id: propertyId }
     });
+    if (!request) {
+        throw new Error("Rental request Not Found")
+    }
+
     if (request?.status === "PENDING") {
         throw new Error("Your previous request on this post is still pending approval. You cannot submit another request until it has been reviewed.");
     }
@@ -21,6 +29,12 @@ const createRantalRequest = async (payload: IRentalRequest, tenantId: string) =>
     return rentalRequest;
 
 }
+
+
+
+
+
+
 
 
 const getAllOwnRequest = async (tenantId: string) => {
@@ -38,7 +52,7 @@ const getrentalRequestById = async (requestId: string) => {
     const request = await prisma.rentalRequest.findUnique({
         where: { id: requestId }
     });
-    if(!request){
+    if (!request) {
         throw new Error("Your Renta request Not Found!")
     }
     return request;

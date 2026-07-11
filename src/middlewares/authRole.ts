@@ -26,7 +26,7 @@ const authRole = (...requiredRole: UserRole[]) => {
 
 
         const { id, role } = validToken.validToken as JwtPayload;
-       
+
         if (!requiredRole.includes(role)) {
             res.status(status.FORBIDDEN).json({
                 success: false,
@@ -39,7 +39,6 @@ const authRole = (...requiredRole: UserRole[]) => {
             where: { id }
         });
 
-        console.log("user stattus",user?.status);
         if (!user) {
             throw new Error("User Not Found. Please login again ");
         }

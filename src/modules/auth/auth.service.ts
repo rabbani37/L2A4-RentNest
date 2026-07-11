@@ -1,4 +1,5 @@
 
+import { UserRole } from "../../../generated/prisma/enums";
 import configIndex from "../../config/config.index";
 import prisma from "../../lib/prisma";
 import { jwtToken } from "../../utility/jwt";
@@ -7,12 +8,9 @@ import bcrypt from "bcrypt"
 
 
 const registerUser = async (payload: IRegisterUser) => {
-    const { email, password, role } = payload;
+    const { email, password, } = payload;
 
-    if (role !== "TENANT" && role !== "LANDLORD") {
-        throw new Error("The role field must be either TENANT or LANDLORD.")
-    }
-
+    validateRegisterInput(payload)
     const isExistUser = await prisma.user.findUnique({
         where: { email }
     });
@@ -37,8 +35,36 @@ const registerUser = async (payload: IRegisterUser) => {
     return createUser;
 };;
 
+
+// Register Input Validation 
+const validateRegisterInput = (data: any) => {
+    if (!data.name || data.name.trim() === "") {
+        throw new Error("Name is required");
+    }
+    if (!data.email || !data.email.includes("@")) {
+        throw new Error("A valid email is required");
+    }
+    if (!data.password || data.password.length < 4) {
+        throw new Error("Password must be at least 4 characters long");
+    }
+    if (!data.role || ![UserRole.LANDLORD, UserRole.TENANT].includes(data.role)) {
+        throw new Error("Role must be either TENANT or LANDLORD");
+    }
+};
+
+
+
+
+
+
+
 const loginUser = async (payload: ILoginUser) => {
     const { email, password } = payload
+
+
+    validateLoginInput(payload)
+
+
     const user = await prisma.user.findUnique({
         where: { email }
     });
@@ -67,6 +93,22 @@ const loginUser = async (payload: ILoginUser) => {
 
     return { accessToken, refreshToken }
 };;
+
+const validateLoginInput = (data: any) => {
+    if (!data.email || !data.email.includes("@")) {
+        throw new Error("A valid email is required");
+    }
+    if (!data.password) {
+        throw new Error("Password is required");
+    }
+};
+
+
+
+
+
+
+
 
 const getProfile = async (id: string) => {
     const user = await prisma.user.findUnique({

@@ -47,7 +47,8 @@ const loginUser = catchAsyncFunc(
             message: "Login successfully",
             data: { accessToken, refreshToken }
         });
-    });;
+    }
+)
 
 
 const getProfile = catchAsyncFunc(

@@ -23,9 +23,10 @@ const getAllUserByAdmin = catchAsyncFunc(
 
 const updateUserStatusByIdTroughAdmin = catchAsyncFunc(
     async (req: Request, res: Response, next: NextFunction) => {
-        const userStatus = req.body.status;
-        const userId = req.params.id;
+        const userStatus = req.body.status ? req.body.status : " "
 
+        
+        const userId = req.params.id;
         const result = await adminService.updateUserStatusByIdTroughAdmin(userStatus, userId as string)
         sendRespose(res, {
             success: true,
@@ -52,7 +53,7 @@ const getallPropertiesByAdmin = (
 );
 
 const getAllRentalRequest = catchAsyncFunc(
-async (req: Request, res: Response, next: NextFunction) => {
+    async (req: Request, res: Response, next: NextFunction) => {
 
         const result = await adminService.getAllRentalRequest()
         sendRespose(res, {
