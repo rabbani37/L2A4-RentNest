@@ -63,7 +63,9 @@ const deletePropertyById = catchAsyncFunc(
 const getAllProperties = catchAsyncFunc(
     async (req: Request, res: Response, next: NextFunction) => {
 
-        const result = await propertyService.getAllProperties()
+        const query = req.query
+
+        const result = await propertyService.getAllProperties(query)
         sendRespose(res, {
             success: true,
             statusCode: status.OK,

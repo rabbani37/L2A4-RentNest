@@ -172,9 +172,64 @@ const deletePropertyById = async (propertyId: string) => {
 
 
 
-const getAllProperties = async () => {
-    const properties = await prisma.property.findMany()
-    return properties;
+const getAllProperties = async (query: any) => {
+    const andCondition: any[] = [];
+
+  
+    if (query.location) {
+        andCondition.push({
+            OR: [
+                {
+                    location: {
+                        contains: query.location,
+                        mode: "insensitive",
+                    },
+                },
+                {
+                    city: {
+                        contains: query.location,
+                        mode: "insensitive",
+                    },
+                },
+            ],
+        });
+    }
+
+
+    if (query.minPrice || query.maxPrice) {
+        const priceCondition: any = {};
+        if (query.minPrice) priceCondition.gte = Number(query.minPrice);
+        if (query.maxPrice) priceCondition.lte = Number(query.maxPrice);
+        andCondition.push({ price: priceCondition });
+    }
+
+   
+    if (query.type) {
+        andCondition.push({
+            category: {
+                name: {
+                    equals: query.type,
+                    mode: "insensitive",
+                },
+            },
+        });
+    }
+
+    const properties1 = await prisma.property.findMany({
+        where: {
+            AND: andCondition,
+        },
+        include: {
+            category: true,
+            landlord: {
+                select: { id: true, name: true, email: true, phone: true },
+            },
+        },
+    });
+
+    return properties1;
+
+
 }
 
 
