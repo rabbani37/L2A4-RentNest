@@ -22,7 +22,8 @@ var config_index_default = {
   jwt_refresh_secret: process.env.JWT_REFRESH_SECRET,
   token_access_expaired: process.env.TOKEN_ACCESS_EXPAIRED,
   token_refresh_expaired: process.env.TOKEN_REFRESH_EXPAIRED,
-  stripe_secret_key: process.env.STRIPE_SECRET_KEY
+  stripe_secret_key: process.env.STRIPE_SECRET_KEY,
+  stripe_webhook_secret: process.env.STRIPE_WEBHOOK_SECRET
 };
 
 // src/app.ts
@@ -111,6 +112,11 @@ var UserRole = {
   LANDLORD: "LANDLORD",
   ADMIN: "ADMIN"
 };
+var PropertyAvailability = {
+  AVAILABLE: "AVAILABLE",
+  RENTED: "RENTED",
+  UNAVAILABLE: "UNAVAILABLE"
+};
 
 // generated/prisma/client.ts
 globalThis["__dirname"] = path2.dirname(fileURLToPath(import.meta.url));
@@ -144,11 +150,35 @@ var jwtToken = {
 
 // src/modules/auth/auth.service.ts
 import bcrypt from "bcrypt";
-var registerUser = async (payload) => {
-  const { email, password, role } = payload;
-  if (role !== "TENANT" && role !== "LANDLORD") {
-    throw new Error("The role field must be either TENANT or LANDLORD.");
+
+// src/modules/auth/validateAuthInput.ts
+var validateRegisterInput = (data) => {
+  if (!data.name || data.name.trim() === "") {
+    throw new Error("Name is required");
   }
+  if (!data.email || !data.email.includes("@")) {
+    throw new Error("A valid email is required");
+  }
+  if (!data.password || data.password.length < 4) {
+    throw new Error("Password must be at least 4 characters long");
+  }
+  if (!data.role || ![UserRole.LANDLORD, UserRole.TENANT].includes(data.role)) {
+    throw new Error("Role must be either TENANT or LANDLORD");
+  }
+};
+var validateLoginInput = (data) => {
+  if (!data.email || !data.email.includes("@")) {
+    throw new Error("A valid email is required");
+  }
+  if (!data.password) {
+    throw new Error("Password is required");
+  }
+};
+
+// src/modules/auth/auth.service.ts
+var registerUser = async (payload) => {
+  const { email, password } = payload;
+  validateRegisterInput(payload);
   const isExistUser = await prisma_default.user.findUnique({
     where: { email }
   });
@@ -169,11 +199,16 @@ var registerUser = async (payload) => {
 };
 var loginUser = async (payload) => {
   const { email, password } = payload;
+  validateLoginInput(payload);
   const user = await prisma_default.user.findUnique({
     where: { email }
   });
   if (!user) {
     throw new Error("User not found! Please provide valid email");
+  }
+  ;
+  if (user.status === "BANNED") {
+    throw new Error("Your account has been banned. Please contact support.");
   }
   ;
   const isPassHash = await bcrypt.compare(password, user.password);
@@ -290,7 +325,6 @@ var authRole = (...requiredRole) => {
     }
     ;
     const { id, role } = validToken.validToken;
-    console.log(role);
     if (!requiredRole.includes(role)) {
       res.status(status2.FORBIDDEN).json({
         success: false,
@@ -331,20 +365,29 @@ var authRouter = router;
 import status3 from "http-status";
 var notFound = (req, res) => {
   res.status(status3.NOT_FOUND).json({
-    message: "Not Found",
-    path: req.originalUrl,
-    date: Date()
+    success: false,
+    message: "Route not found",
+    errorDetails: `Cannot ${req.method} ${req.originalUrl}`
   });
 };
 
 // src/middlewares/globalErrorHandler.ts
 import status4 from "http-status";
 var globalErrorHandler = (err, req, res, next) => {
-  res.status(status4.INTERNAL_SERVER_ERROR).json({
+  let statusCode = status4.INTERNAL_SERVER_ERROR;
+  let message = err.message || "Something went wrong";
+  if (message.includes("not found")) {
+    statusCode = status4.NOT_FOUND;
+  } else if (message.includes("not authorized") || message.includes("unauthorized") || message.includes("banned")) {
+    statusCode = status4.FORBIDDEN;
+  } else if (message.includes("required") || message.includes("must be") || message.includes("Invalid") || message.includes("already")) {
+    statusCode = status4.BAD_REQUEST;
+  }
+  res.status(statusCode).json({
     success: false,
-    statusCode: status4.INTERNAL_SERVER_ERROR,
-    message: err.message,
+    message,
     errorDetails: err.stack
+    // It shouldn't always be stack here, but the project is only in development, that's why I kept the stack.
   });
 };
 
@@ -354,8 +397,92 @@ import { Router as Router2 } from "express";
 // src/modules/property/property.controller.ts
 import status5 from "http-status";
 
+// src/modules/property/validatePropertyInput.ts
+var validateRentalStatusInput = (status11) => {
+  if (!status11 || !["APPROVED", "REJECTED"].includes(status11)) {
+    throw new Error("Status must be either APPROVED or REJECTED");
+  }
+};
+var validatePropertyInput = (data) => {
+  if (!data.title || data.title.trim() === "") {
+    throw new Error("Title is required");
+  }
+  if (!data.description || data.description.trim() === "") {
+    throw new Error("Description is required");
+  }
+  if (!data.price || data.price <= 0) {
+    throw new Error("Price must be a positive number");
+  }
+  if (!data.location || data.location.trim() === "") {
+    throw new Error("Location is required");
+  }
+  if (!data.city || data.city.trim() === "") {
+    throw new Error("City is required");
+  }
+  if (!data.bedrooms || data.bedrooms <= 0) {
+    throw new Error("Bedrooms must be a positive number");
+  }
+  if (!data.bathrooms || data.bathrooms <= 0) {
+    throw new Error("Bathrooms must be a positive number");
+  }
+  if (!data.size || data.size <= 0) {
+    throw new Error("Size must be a positive number");
+  }
+  if (!data.availability || ![PropertyAvailability.AVAILABLE, PropertyAvailability.RENTED, PropertyAvailability.UNAVAILABLE].includes(data.availability)) {
+    throw new Error("Invalid availability status");
+  }
+  if (!data.categoryId) {
+    throw new Error("Category ID is required");
+  }
+  if (!Array.isArray(data.amenities)) {
+    throw new Error("Amenities must be an array");
+  }
+  if (!Array.isArray(data.images) || data.images.length === 0) {
+    throw new Error("At least one image is required");
+  }
+};
+var validateUpdatePropertyInput = (data) => {
+  if (data.title !== void 0 && data.title.trim() === "") {
+    throw new Error("Title cannot be empty");
+  }
+  if (data.description !== void 0 && data.description.trim() === "") {
+    throw new Error("Description cannot be empty");
+  }
+  if (data.price !== void 0 && data.price <= 0) {
+    throw new Error("Price must be a positive number");
+  }
+  if (data.location !== void 0 && data.location.trim() === "") {
+    throw new Error("Location cannot be empty");
+  }
+  if (data.city !== void 0 && data.city.trim() === "") {
+    throw new Error("City cannot be empty");
+  }
+  if (data.bedrooms !== void 0 && data.bedrooms <= 0) {
+    throw new Error("Bedrooms must be a positive number");
+  }
+  if (data.bathrooms !== void 0 && data.bathrooms <= 0) {
+    throw new Error("Bathrooms must be a positive number");
+  }
+  if (data.size !== void 0 && data.size <= 0) {
+    throw new Error("Size must be a positive number");
+  }
+  if (data.amenities !== void 0 && !Array.isArray(data.amenities)) {
+    throw new Error("Amenities must be an array");
+  }
+  if (data.images !== void 0 && !Array.isArray(data.images)) {
+    throw new Error("Images must be an array");
+  }
+  if (data.availability !== void 0 && !["AVAILABLE", "RENTED", "UNAVAILABLE"].includes(data.availability)) {
+    throw new Error("Invalid availability status");
+  }
+  if (data.categoryId !== void 0 && data.categoryId.trim() === "") {
+    throw new Error("Category ID cannot be empty");
+  }
+};
+
 // src/modules/property/property.service.ts
 var createProperties = async (payload, landlordId) => {
+  validatePropertyInput(payload);
   const property = await prisma_default.property.create({
     data: {
       ...payload,
@@ -365,12 +492,16 @@ var createProperties = async (payload, landlordId) => {
   });
   return property;
 };
-var updatePropertyById = async (payload, propertyId) => {
-  const proprety = await prisma_default.property.findUnique({ where: { id: propertyId } });
-  if (!proprety) {
+var updatePropertyById = async (payload, propertyId, landlordId) => {
+  const property = await prisma_default.property.findUnique({ where: { id: propertyId } });
+  if (!property) {
     throw new Error("Not Found Property");
   }
   ;
+  if (property.landlordId !== landlordId) {
+    throw new Error("You are not authorized to update this property");
+  }
+  validateUpdatePropertyInput(payload);
   const result = await prisma_default.property.update({
     where: { id: propertyId },
     data: {
@@ -387,9 +518,54 @@ var deletePropertyById = async (propertyId) => {
   ;
   return await prisma_default.property.delete({ where: { id: propertyId } });
 };
-var getAllProperties = async () => {
-  const properties = await prisma_default.property.findMany();
-  return properties;
+var getAllProperties = async (query) => {
+  const andCondition = [];
+  if (query.location) {
+    andCondition.push({
+      OR: [
+        {
+          location: {
+            contains: query.location,
+            mode: "insensitive"
+          }
+        },
+        {
+          city: {
+            contains: query.location,
+            mode: "insensitive"
+          }
+        }
+      ]
+    });
+  }
+  if (query.minPrice || query.maxPrice) {
+    const priceCondition = {};
+    if (query.minPrice) priceCondition.gte = Number(query.minPrice);
+    if (query.maxPrice) priceCondition.lte = Number(query.maxPrice);
+    andCondition.push({ price: priceCondition });
+  }
+  if (query.type) {
+    andCondition.push({
+      category: {
+        name: {
+          equals: query.type,
+          mode: "insensitive"
+        }
+      }
+    });
+  }
+  const properties1 = await prisma_default.property.findMany({
+    where: {
+      AND: andCondition
+    },
+    include: {
+      category: true,
+      landlord: {
+        select: { id: true, name: true, email: true, phone: true }
+      }
+    }
+  });
+  return properties1;
 };
 var getPropertyById = async (propertyId) => {
   const proprety = await prisma_default.property.findUnique({ where: { id: propertyId } });
@@ -411,6 +587,7 @@ var getAllRentalRequests = async (landlordId) => {
   return rentalRequest;
 };
 var updateStatusOfRentalRequest = async (statusValue, landlordId, requestId) => {
+  validateRentalStatusInput(statusValue);
   const request = await prisma_default.rentalRequest.findUnique({
     where: { id: requestId },
     include: { property: true }
@@ -423,6 +600,9 @@ var updateStatusOfRentalRequest = async (statusValue, landlordId, requestId) => 
     throw new Error("You are not authorized to update this request");
   }
   ;
+  if (request.status !== "PENDING") {
+    throw new Error(`Cannot update status. Current status is already ${request.status}`);
+  }
   const updateStatusRequest = await prisma_default.rentalRequest.update({
     where: { id: requestId },
     data: { status: statusValue }
@@ -455,9 +635,10 @@ var createProperties2 = catchAsyncFunc(
 );
 var updatePropertyById2 = catchAsyncFunc(
   async (req, res, next) => {
+    const landlordId = req.presentUser?.id;
     const propertyId = req.params.id;
     const payload = req.body;
-    const result = await propertyService.updatePropertyById(payload, propertyId);
+    const result = await propertyService.updatePropertyById(payload, propertyId, landlordId);
     sendRespose(res, {
       success: true,
       statusCode: status5.OK,
@@ -480,7 +661,8 @@ var deletePropertyById2 = catchAsyncFunc(
 );
 var getAllProperties2 = catchAsyncFunc(
   async (req, res, next) => {
-    const result = await propertyService.getAllProperties();
+    const query = req.query;
+    const result = await propertyService.getAllProperties(query);
     sendRespose(res, {
       success: true,
       statusCode: status5.OK,
@@ -539,11 +721,11 @@ var properController = {
 
 // src/modules/property/property.router.ts
 var router2 = Router2();
-router2.post("/properties", authRole_default(UserRole.LANDLORD, UserRole.ADMIN), properController.createProperties);
-router2.put("/properties/:id", authRole_default(UserRole.LANDLORD, UserRole.ADMIN), properController.updatePropertyById);
-router2.delete("/properties/:id", authRole_default(UserRole.LANDLORD, UserRole.ADMIN), properController.deletePropertyById);
-router2.get("/requests", authRole_default(UserRole.LANDLORD, UserRole.ADMIN), properController.getAllRentalRequests);
-router2.patch("/requests/:id", authRole_default(UserRole.LANDLORD, UserRole.ADMIN), properController.updateStatusOfRentalRequest);
+router2.post("/properties", authRole_default(UserRole.LANDLORD), properController.createProperties);
+router2.put("/properties/:id", authRole_default(UserRole.LANDLORD), properController.updatePropertyById);
+router2.delete("/properties/:id", authRole_default(UserRole.LANDLORD), properController.deletePropertyById);
+router2.get("/requests", authRole_default(UserRole.LANDLORD), properController.getAllRentalRequests);
+router2.patch("/requests/:id", authRole_default(UserRole.LANDLORD), properController.updateStatusOfRentalRequest);
 router2.get("/", properController.getAllProperties);
 router2.get("/:id", properController.getPropertyById);
 var propertyRouter = router2;
@@ -554,10 +736,20 @@ import { Router as Router3 } from "express";
 // src/modules/category/category.controller.ts
 import status6 from "http-status";
 
+// src/modules/category/validateCategoriesInput.ts
+var validateCategoryInput = (data) => {
+  if (!data.name || data.name.trim() === "") {
+    throw new Error("Category name is required");
+  }
+};
+
 // src/modules/category/category.service.ts
 var createCategory = async (payload) => {
   const { name } = payload;
-  console.log(payload);
+  validateCategoryInput(payload);
+  if (!name) {
+    throw new Error("Name is required");
+  }
   const category = await prisma_default.category.findUnique({
     where: { name }
   });
@@ -616,19 +808,46 @@ import { Router as Router4 } from "express";
 // src/modules/rentalRequest/rentalRequest.controller.ts
 import status7 from "http-status";
 
+// src/modules/rentalRequest/validateRentalrequestInput.ts
+var validateRentalRequestInput = (data) => {
+  if (!data.propertyId || data.propertyId.trim() === "") {
+    throw new Error("Property ID is required");
+  }
+  if (data.moveInDate !== void 0 && isNaN(Date.parse(data.moveInDate))) {
+    throw new Error("Invalid move-in date format");
+  }
+  if (data.message !== void 0 && typeof data.message !== "string") {
+    throw new Error("Message must be a string ");
+  }
+};
+
 // src/modules/rentalRequest/rentalRequest.service.ts
 var createRantalRequest = async (payload, tenantId) => {
-  const { propertyId } = payload;
-  const request = await prisma_default.rentalRequest.findUnique({
+  validateRentalRequestInput(payload);
+  const { propertyId, moveInDate, message } = payload;
+  const property = await prisma_default.property.findUnique({
     where: { id: propertyId }
   });
-  if (request?.status === "PENDING") {
-    throw new Error("Your previous request on this post is still pending approval. You cannot submit another request until it has been reviewed.");
+  if (!property) {
+    throw new Error("Property not found");
+  }
+  const existingRequest = await prisma_default.rentalRequest.findFirst({
+    where: {
+      tenantId,
+      propertyId,
+      status: "PENDING"
+    }
+  });
+  if (existingRequest) {
+    throw new Error("Your previous request on this property is still pending approval. You cannot submit another request until it has been reviewed.");
   }
   const rentalRequest = await prisma_default.rentalRequest.create({
     data: {
-      ...payload,
-      tenantId
+      propertyId,
+      moveInDate: moveInDate ? new Date(moveInDate) : void 0,
+      message,
+      tenantId,
+      status: "PENDING"
     }
   });
   return rentalRequest;
@@ -712,9 +931,26 @@ import { Router as Router5 } from "express";
 // src/modules/review/review.controller.ts
 import status8 from "http-status";
 
+// src/modules/review/validateReviewInput.ts
+var validateReviewInput = (data) => {
+  if (!data.propertyId || data.propertyId.trim() === "") {
+    throw new Error("Property ID is required");
+  }
+  if (data.rating === void 0 || data.rating === null) {
+    throw new Error("Rating is required");
+  }
+  if (!Number.isInteger(data.rating) || data.rating < 1 || data.rating > 5) {
+    throw new Error("Rating must be an integer between 1 and 5");
+  }
+  if (!data.comment || data.comment.trim() === "") {
+    throw new Error("Comment is required");
+  }
+};
+
 // src/modules/review/review.service.ts
 var createReview = async (payload, tenantId) => {
-  const { propertyId, rating } = payload;
+  const { propertyId } = payload;
+  validateReviewInput(payload);
   const completedRentalRquest = await prisma_default.rentalRequest.findFirst({
     where: {
       tenantId,
@@ -724,9 +960,6 @@ var createReview = async (payload, tenantId) => {
   });
   if (!completedRentalRquest) {
     throw new Error("You can only review properties you have completed renting");
-  }
-  if (!(rating <= 5 && rating >= 2)) {
-    throw new Error("Rating must be between 2 and 5");
   }
   const review = await prisma_default.review.create({
     data: {
@@ -769,16 +1002,30 @@ import { Router as Router6 } from "express";
 // src/modules/adminAPI/admin.controller.ts
 import status9 from "http-status";
 
+// src/modules/adminAPI/validateUserStatusInput.ts
+var validateUserStatusInput = (status11) => {
+  if (!status11 || !["ACTIVE", "BANNED"].includes(status11)) {
+    throw new Error("Status must be either ACTIVE or BANNED");
+  }
+};
+
 // src/modules/adminAPI/admin.service.ts
 var getAllUserByAdmin = async () => {
   const users = await prisma_default.user.findMany({
+    where: {
+      role: {
+        not: "ADMIN"
+      }
+    },
     omit: { password: true }
   });
   return users;
 };
 var updateUserStatusByIdTroughAdmin = async (userStatus, userId) => {
+  validateUserStatusInput(userStatus);
   const updatedUser = await prisma_default.user.update({
     where: { id: userId },
+    omit: { password: true },
     data: { status: userStatus }
   });
   return updatedUser;
@@ -812,7 +1059,7 @@ var getAllUserByAdmin2 = catchAsyncFunc(
 );
 var updateUserStatusByIdTroughAdmin2 = catchAsyncFunc(
   async (req, res, next) => {
-    const userStatus = req.body.status;
+    const userStatus = req.body.status ? req.body.status : " ";
     const userId = req.params.id;
     const result = await adminService.updateUserStatusByIdTroughAdmin(userStatus, userId);
     sendRespose(res, {
@@ -860,7 +1107,183 @@ var adminRouter = router5;
 
 // src/modules/payment/payment.router.ts
 import { Router as Router7 } from "express";
+
+// src/modules/payment/payment.controller.ts
+import status10 from "http-status";
+
+// src/lib/stripe.ts
+import Stripe from "stripe";
+var stripe = new Stripe(config_index_default.stripe_secret_key);
+
+// src/modules/payment/payment.service.ts
+var createPayments = async (rentalRequestId, tenantId) => {
+  const transctionResult = await prisma_default.$transaction(async (tx) => {
+    const rentalRequest = await tx.rentalRequest.findUnique({
+      where: { id: rentalRequestId },
+      include: { property: true, tenant: true }
+    });
+    if (!rentalRequest) {
+      throw new Error("Rental request not found");
+    }
+    if (rentalRequest.status !== "APPROVED") {
+      throw new Error("Payment is only allowed for approved rental requests");
+    }
+    if (rentalRequest.tenantId !== tenantId) {
+      throw new Error("You are not authorized to pay for this rental request");
+    }
+    const session = await stripe.checkout.sessions.create({
+      customer_email: rentalRequest.tenant.email,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: rentalRequest.property.title
+            },
+            unit_amount: Number(rentalRequest.property.price) * 100
+          },
+          quantity: 1
+        }
+      ],
+      mode: "payment",
+      payment_method_types: ["card"],
+      success_url: `${config_index_default.app_url}/payments/confirm`,
+      cancel_url: `${config_index_default.app_url}/payments/cancel`,
+      metadata: {
+        tenantId,
+        rentalRequestId: rentalRequest.id
+      }
+    });
+    await tx.payment.create({
+      data: {
+        transactionId: session.id,
+        rentalRequestId: rentalRequest.id,
+        tenantId,
+        amount: rentalRequest.property.price,
+        provider: "STRIPE",
+        status: "PENDING"
+      }
+    });
+    return session.url;
+  });
+  const paymentUrl = transctionResult;
+  return { paymentUrl };
+};
+var handleWebhook = async (eventPayload, signature) => {
+  const endpointSecret = config_index_default.stripe_webhook_secret;
+  const event = stripe.webhooks.constructEvent(
+    eventPayload,
+    signature,
+    endpointSecret
+  );
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object;
+      const payment = await prisma_default.payment.update({
+        where: { transactionId: session.id },
+        data: {
+          status: "COMPLETED",
+          paidAt: /* @__PURE__ */ new Date(),
+          method: "card"
+        }
+      });
+      await prisma_default.rentalRequest.update({
+        where: { id: payment.rentalRequestId },
+        data: { status: "ACTIVE" }
+      });
+      break;
+    }
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+};
+var getUsersPaymentHistory = async () => {
+  const paymets = await prisma_default.payment.findMany();
+  if (!paymets) {
+    throw new Error("Payment histroy not found");
+  }
+  return paymets;
+};
+var getUserPaymentHistoryById = async (paymentId) => {
+  const payments = await prisma_default.payment.findUnique({
+    where: { id: paymentId }
+  });
+  if (!payments) {
+    throw new Error("Payment histroy not found");
+  }
+  ;
+  return payments;
+};
+var paymentService = {
+  createPayments,
+  handleWebhook,
+  getUsersPaymentHistory,
+  getUserPaymentHistoryById
+};
+
+// src/modules/payment/payment.controller.ts
+var createPayments2 = catchAsyncFunc(
+  async (req, res, next) => {
+    const tenantId = req.presentUser?.id;
+    const rentalRequestId = req.body.rentalRequestId;
+    const { paymentUrl } = await paymentService.createPayments(rentalRequestId, tenantId);
+    sendRespose(res, {
+      success: true,
+      statusCode: status10.OK,
+      message: "Check out completed successfully  ",
+      data: paymentUrl
+    });
+  }
+);
+var handleWebhook2 = catchAsyncFunc(
+  async (req, res, next) => {
+    const event = req.body;
+    const signature = req.headers["stripe-signature"];
+    await paymentService.handleWebhook(event, signature);
+    sendRespose(res, {
+      success: true,
+      statusCode: status10.OK,
+      message: "Webhook triggered successfully",
+      data: null
+    });
+  }
+);
+var getUsersPaymentHistory2 = catchAsyncFunc(
+  async (req, res, next) => {
+    const result = await paymentService.getUsersPaymentHistory();
+    sendRespose(res, {
+      success: true,
+      statusCode: status10.OK,
+      message: "Successfully retrive all users payments history",
+      data: result
+    });
+  }
+);
+var getUserPaymentHistoryById2 = catchAsyncFunc(
+  async (req, res, next) => {
+    const paymentId = req.params.id;
+    const result = await paymentService.getUserPaymentHistoryById(paymentId);
+    sendRespose(res, {
+      success: true,
+      statusCode: status10.OK,
+      message: "Successfully retrive single user payment history",
+      data: result
+    });
+  }
+);
+var paymetnsController = {
+  createPayments: createPayments2,
+  handleWebhook: handleWebhook2,
+  getUsersPaymentHistory: getUsersPaymentHistory2,
+  getUserPaymentHistoryById: getUserPaymentHistoryById2
+};
+
+// src/modules/payment/payment.router.ts
 var router6 = Router7();
+router6.post("/create", authRole_default(UserRole.TENANT), paymetnsController.createPayments);
+router6.post("/webhook", paymetnsController.handleWebhook);
+router6.get("/", paymetnsController.getUsersPaymentHistory);
+router6.get("/:id", paymetnsController.getUserPaymentHistoryById);
 var paymentRouter = router6;
 
 // src/app.ts
@@ -869,6 +1292,7 @@ app.use(cors({
   origin: config_index_default.app_url,
   credentials: true
 }));
+app.use("/api/payments/webhook", express.raw({ type: "application/json" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

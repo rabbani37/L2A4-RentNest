@@ -10,7 +10,6 @@ const createCategory = async (payload: { name: string }) => {
         throw new Error("Name is required")
     }
 
-    console.log(payload);
     const category = await prisma.category.findUnique({
         where: { name }
     });

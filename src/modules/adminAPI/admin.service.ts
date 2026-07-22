@@ -1,3 +1,4 @@
+import { tr } from "zod/locales";
 import { UserStatus } from "../../../generated/prisma/enums";
 import prisma from "../../lib/prisma";
 import { validateUserStatusInput } from "./validateUserStatusInput";
@@ -8,6 +9,11 @@ import { validateUserStatusInput } from "./validateUserStatusInput";
 const getAllUserByAdmin = async () => {
 
     const users = await prisma.user.findMany({
+        where: {
+            role: {
+                not: "ADMIN"
+            }
+        },
         omit: { password: true }
     })
     return users;
@@ -19,9 +25,10 @@ const updateUserStatusByIdTroughAdmin = async (userStatus: UserStatus, userId: s
 
     validateUserStatusInput(userStatus)
 
-   
+
     const updatedUser = await prisma.user.update({
         where: { id: userId },
+        omit:{password:true},
         data: { status: userStatus }
     });
 

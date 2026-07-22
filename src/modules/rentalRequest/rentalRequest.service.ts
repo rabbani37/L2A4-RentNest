@@ -5,24 +5,40 @@ import { validateRentalRequestInput } from "./validateRentalrequestInput";
 
 const createRantalRequest = async (payload: IRentalRequest, tenantId: string) => {
 
-    validateRentalRequestInput(payload)
+    
+    validateRentalRequestInput(payload);
 
-    const { propertyId } = payload;
-    const request = await prisma.rentalRequest.findUnique({
+    const { propertyId, moveInDate, message } = payload;
+
+    const property = await prisma.property.findUnique({
         where: { id: propertyId }
     });
-    if (!request) {
-        throw new Error("Rental request Not Found")
+
+    if (!property) {
+        throw new Error("Property not found");
     }
 
-    if (request?.status === "PENDING") {
-        throw new Error("Your previous request on this post is still pending approval. You cannot submit another request until it has been reviewed.");
+   
+    const existingRequest = await prisma.rentalRequest.findFirst({
+        where: {
+            tenantId,
+            propertyId,
+            status: "PENDING",
+        },
+    });
+
+    if (existingRequest) {
+        throw new Error("Your previous request on this property is still pending approval. You cannot submit another request until it has been reviewed.");
     }
 
+  
     const rentalRequest = await prisma.rentalRequest.create({
         data: {
-            ...payload,
-            tenantId
+            propertyId,
+            moveInDate: moveInDate ? new Date(moveInDate) : undefined,
+            message,
+            tenantId,
+            status: "PENDING", 
         }
     });
 
